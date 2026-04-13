@@ -112,79 +112,101 @@ The dashboard enables facility managers to:
 ## Project Structure
 
 ```
-frontend/
-├── public/
-│   ├── index.html          # Entry HTML
-│   ├── favicon.ico
-│   ├── favicon.svg
-│   └── icons.svg
+project-root/
 │
-├── src/
-│   ├── components/
-│   │   ├── layout/
-│   │   │   ├── Layout.jsx           # Main app wrapper with provider
-│   │   │   ├── Navbar.jsx           # Top navigation bar
-│   │   │   ├── Sidebar.jsx          # Left sidebar navigation
-│   │   │   └── UpdateContext.jsx    # Global state for theme & updates
-│   │   │
-│   │   ├── dashboard/
-│   │   │   ├── StatCard.jsx         # KPI cards (total benches, revenue, etc)
-│   │   │   └── BenchCard.jsx        # Bench grid card component
-│   │   │
-│   │   ├── charts/
-│   │   │   ├── BatteryChart.jsx     # Battery level line chart
-│   │   │   ├── SolarChart.jsx       # Solar generation area chart
-│   │   │   ├── SessionsChart.jsx    # Sessions per day line chart
-│   │   │   └── RevenueChart.jsx     # Revenue per day bar chart
-│   │   │
-│   │   ├── control/
-│   │   │   └── ControlPanel.jsx     # Remote device control panel
-│   │   │
-│   │   └── common/
-│   │       ├── Button.jsx           # Reusable button component
-│   │       ├── Loader.jsx           # Loading spinner
-│   │       ├── StatusBadge.jsx      # Status indicator badge
-│   │       ├── FormInput.jsx        # Form input with validation
-│   │       └── ProtectedRoute.jsx   # Auth-protected route wrapper
-│   │
-│   ├── pages/
-│   │   ├── Login.jsx                # User login page
-│   │   ├── Register.jsx             # User registration page
-│   │   ├── Dashboard.jsx            # Main dashboard with bench overview
-│   │   ├── BenchDetails.jsx         # Detail view for single bench
-│   │   ├── Analytics.jsx            # Fleet-wide analytics
-│   │   ├── Alerts.jsx               # Alert notifications
-│   │   ├── Tokens.jsx               # Token dashboard and transaction history
-│   │   └── Settings.jsx             # Theme & customization settings
-│   │
-│   ├── services/
-│   │   ├── api.js                   # Axios client & mock endpoints
-│   │   ├── auth.js                  # Auth API calls (login, register)
-│   │   └── tokens.js                # Token allocation & spending logic
-│   │
-│   ├── hooks/
-│   │   └── useFetch.js              # Data fetching with polling
-│   │
-│   ├── context/
-│   │   ├── AuthContext.jsx          # Global authentication state
-│   │   └── TokenContext.jsx         # Global token state and operations
-│   │
-│   ├── config/
-│   │   └── themes.js                # Predefined color theme configuration
-│   │
-│   ├── utils/
-│   │   └── format.js                # Number, date, and currency formatters
-│   │
-│   ├── App.jsx                      # Root component with router
-│   ├── main.jsx                     # React DOM entry point
-│   ├── routes.jsx                   # Route definitions
-│   └── index.css                    # Tailwind directives
+├── backend/                         # Node.js Express API Server
+│   ├── server.js                    # Express server & API routes
+│   ├── package.json                 # Backend dependencies
+│   ├── .gitignore
+│   ├── .env                         # Backend configuration (create as needed)
+│   ├── data/
+│   │   ├── benches.json             # Benches database (JSON file)
+│   │   └── users.json               # Users database (JSON file)
+│   └── README.md                    # Backend setup guide
 │
-├── package.json                     # Dependencies and scripts
-├── vite.config.js                   # Vite configuration
-├── tailwind.config.js               # Tailwind theme config
-├── postcss.config.js                # PostCSS plugins
-└── .gitignore                       # Git ignore rules
+├── frontend/                        # React + Vite Frontend Application
+│   ├── public/
+│   │   ├── index.html               # Entry HTML
+│   │   ├── favicon.ico
+│   │   ├── favicon.svg
+│   │   └── icons.svg
+│   │
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── layout/
+│   │   │   │   ├── Layout.jsx           # Main app wrapper with provider
+│   │   │   │   ├── Navbar.jsx           # Top navigation bar with tokens
+│   │   │   │   ├── Sidebar.jsx          # Left sidebar with admin links
+│   │   │   │   ├── DashboardRouter.jsx  # Role-based dashboard router
+│   │   │   │   └── UpdateContext.jsx    # Global state for theme & updates
+│   │   │   │
+│   │   │   ├── dashboard/
+│   │   │   │   ├── DashboardRouter.jsx  # Routes to UserDashboard or AdminDashboard
+│   │   │   │   ├── StatCard.jsx         # KPI cards (total benches, revenue, etc)
+│   │   │   │   └── BenchCard.jsx        # Bench grid card component
+│   │   │   │
+│   │   │   ├── charts/
+│   │   │   │   ├── BatteryChart.jsx     # Battery level line chart
+│   │   │   │   ├── SolarChart.jsx       # Solar generation area chart
+│   │   │   │   ├── SessionsChart.jsx    # Sessions per day line chart
+│   │   │   │   └── RevenueChart.jsx     # Revenue per day bar chart
+│   │   │   │
+│   │   │   ├── control/
+│   │   │   │   ├── ControlPanel.jsx     # Remote device control panel
+│   │   │   │   └── AddBenchModal.jsx    # Modal for adding new benches
+│   │   │   │
+│   │   │   └── common/
+│   │   │       ├── Button.jsx           # Reusable button component
+│   │   │       ├── Loader.jsx           # Loading spinner
+│   │   │       ├── StatusBadge.jsx      # Status indicator badge
+│   │   │       ├── FormInput.jsx        # Form input with validation
+│   │   │       └── ProtectedRoute.jsx   # Auth-protected route wrapper
+│   │   │
+│   │   ├── pages/
+│   │   │   ├── Login.jsx                # User login page
+│   │   │   ├── Register.jsx             # User registration page
+│   │   │   ├── UserDashboard.jsx        # User monitoring dashboard
+│   │   │   ├── AdminDashboard.jsx       # Admin fleet management dashboard
+│   │   │   ├── AdminBenches.jsx         # Admin: View/edit/add/delete benches
+│   │   │   ├── AdminUsers.jsx           # Admin: View/edit/add/delete users
+│   │   │   ├── BenchDetails.jsx         # Detail view for single bench
+│   │   │   ├── Analytics.jsx            # Fleet-wide analytics
+│   │   │   ├── Alerts.jsx               # Alert notifications
+│   │   │   ├── Tokens.jsx               # Token dashboard and transaction history
+│   │   │   └── Settings.jsx             # Theme & customization settings
+│   │   │
+│   │   ├── services/
+│   │   │   ├── api.js                   # Axios client & mock endpoints
+│   │   │   ├── auth.js                  # Auth API calls (login, register)
+│   │   │   ├── tokens.js                # Token allocation & spending logic
+│   │   │   └── database.js              # Database API service (CRUD operations)
+│   │   │
+│   │   ├── hooks/
+│   │   │   └── useFetch.js              # Data fetching with polling
+│   │   │
+│   │   ├── context/
+│   │   │   ├── AuthContext.jsx          # Global authentication state
+│   │   │   └── TokenContext.jsx         # Global token state and operations
+│   │   │
+│   │   ├── config/
+│   │   │   └── themes.js                # Predefined color theme configuration
+│   │   │
+│   │   ├── utils/
+│   │   │   └── format.js                # Number, date, and currency formatters
+│   │   │
+│   │   ├── App.jsx                      # Root component with router
+│   │   ├── main.jsx                     # React DOM entry point
+│   │   ├── routes.jsx                   # Route definitions
+│   │   └── index.css                    # Tailwind directives
+│   │
+│   ├── package.json                     # Frontend dependencies and scripts
+│   ├── vite.config.js                   # Vite configuration
+│   ├── tailwind.config.js               # Tailwind theme config
+│   ├── postcss.config.js                # PostCSS plugins
+│   ├── .env.local                       # Frontend environment variables
+│   └── .gitignore                       # Git ignore rules
+│
+└── README.md                        # This file
 ```
 
 ---
@@ -194,48 +216,95 @@ frontend/
 ### Prerequisites
 - Node.js 16.x or higher
 - npm or yarn package manager
+- Two terminal windows (for backend and frontend)
 
 ### Steps
 
-1. **Navigate to frontend directory**
+1. **Install Backend Dependencies**
+   ```bash
+   cd backend
+   npm install
+   cd ..
+   ```
+
+2. **Install Frontend Dependencies**
    ```bash
    cd frontend
-   ```
-
-2. **Install dependencies**
-   ```bash
    npm install
+   cd ..
    ```
 
-   Or with yarn:
+3. **Verify Installation**
    ```bash
-   yarn install
-   ```
-
-3. **Verify installation**
-   ```bash
-   npm list react react-dom recharts axios react-router-dom
+   npm list react react-dom recharts axios react-router-dom --prefix frontend
    ```
 
 ---
 
 ## Running the Application
 
-### Development Mode
+### Quick Start (With Backend)
 
-Start the Vite dev server with Hot Module Replacement (HMR):
+#### 1. Install Backend Dependencies
 
 ```bash
+cd backend
+npm install
+cd ..
+```
+
+#### 2. Start Backend Server (Terminal 1)
+
+```bash
+cd backend
+npm start
+```
+
+Server runs on `http://localhost:5000/api`
+
+**Output:**
+```
+Smart Solar Bench Backend running on http://localhost:5000
+API available at http://localhost:5000/api
+```
+
+#### 3. Start Frontend Dev Server (Terminal 2)
+
+```bash
+cd frontend
 npm run dev
 ```
 
-The application will be available at `http://localhost:5173`
+Frontend runs on `http://localhost:5173`
 
-**Features in dev mode:**
+**Features:**
+- Real-time database syncing
+- Admin panel for managing benches and users
 - Hot reload on file changes
 - Sourcemaps for debugging
-- Mock API responses with 400-700ms delays
-- Console debugging enabled
+
+#### 4. Access the Application
+
+Open `http://localhost:5173` in your browser
+
+**Demo Login:**
+- Admin Account: `admin@example.com` / `password123` (Full access, admin panel)
+- User Account: `manager@example.com` / `password123` (Monitoring only)
+
+---
+
+### Backend-Free Development (Mock Mode)
+
+If you don't want to run the backend, the app works with mock data:
+
+```bash
+cd frontend
+npm run dev
+```
+
+**Limitation:** Data changes won't persist (in-memory only)
+
+---
 
 ### Production Build
 
@@ -246,8 +315,8 @@ npm run build
 ```
 
 **Output:**
-- Minified CSS: `dist/assets/index-*.css` (~3.91 KB gzipped)
-- Minified JS: `dist/assets/index-*.js` (~196 KB gzipped)
+- Minified CSS: `dist/assets/index-*.css` (~5.17 KB gzipped)
+- Minified JS: `dist/assets/index-*.js` (~205 KB gzipped)
 - HTML entry: `dist/index.html`
 
 ### Preview Build
@@ -262,22 +331,82 @@ Available at `http://localhost:4173`
 
 ---
 
+## Database & API
+
+### Backend Database API
+
+The application includes a **Node.js + Express backend** with RESTful endpoints for managing:
+- **Benches** - Solar charging station data
+- **Users** - User accounts and authentication
+- **JSON file storage** - No external database required
+
+**Backend Location:** `backend/` directory
+**API Server:** `http://localhost:5000/api`
+
+#### API Endpoints
+
+**Benches:**
+- `GET /api/benches` - List all benches
+- `POST /api/benches` - Create new bench
+- `PUT /api/benches/:id` - Update bench
+- `DELETE /api/benches/:id` - Delete bench
+
+**Users:**
+- `GET /api/users` - List all users
+- `POST /api/users` - Create new user
+- `PUT /api/users/:id` - Update user
+- `DELETE /api/users/:id` - Delete user
+
+### Admin Panel
+
+**Admin-only pages for managing data:**
+
+1. **Manage Benches** (`/admin/benches`)
+   - View all benches in table format
+   - Add new benches with location and capacity
+   - Edit bench properties (battery, capacity, status, location)
+   - Delete benches with confirmation
+   - Real-time status and battery indicators
+
+2. **Manage Users** (`/admin/users`)
+   - View all users with roles and status
+   - Add new user accounts
+   - Edit user details (name, email, role, status)
+   - Delete user accounts with confirmation
+   - Role-based access control (admin/user)
+
+**Access:** Login as admin (`admin@example.com`) → Sidebar shows "Admin Panel"
+
+### Mock Data
+
+Initial database includes:
+- **4 Solar Benches:** PARK-001 to PARK-004 with realistic metrics
+- **3 User Accounts:** 1 admin + 2 regular users
+
+Data is persisted in:
+- `backend/data/benches.json`
+- `backend/data/users.json`
+
+---
+
 ## API & Mock Data
 
-### Mock Endpoints
+### Real API vs Mock Mode
 
-The application uses **Axios with mock responses** when `VITE_API_BASE_URL` environment variable is not set.
+The application intelligently switches between:
 
-#### GET /benches
+**Real API Mode** (Backend running):
+```bash
+# Frontend connects to backend
+VITE_API_BASE_URL=http://localhost:5000/api
+```
 
-Returns array of all benches with current metrics.
+**Mock Mode** (No backend):
+- Falls back to mock responses
+- Data not persisted across refreshes
+- Useful for frontend development without backend
 
-**Mock Response:**
-```json
-[
-  {
-    "bench_id": "PARK-001",
-    "battery_percent": 87,
+
     "solar_watts": 12.5,
     "active_sessions": 1,
     "daily_sessions": 14,
