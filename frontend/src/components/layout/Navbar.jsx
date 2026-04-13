@@ -1,11 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { useLastUpdated } from './UpdateContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { useTokens } from '../../context/TokenContext.jsx';
 import { formatDateTime } from '../../utils/format.js';
 
 export default function Navbar() {
   const { lastUpdated, darkMode, toggleDark } = useLastUpdated();
   const { user, logout } = useAuth();
+  const { tokenData } = useTokens();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -21,6 +23,9 @@ export default function Navbar() {
           <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">Last updated {formatDateTime(lastUpdated)}</p>
         </div>
         <div className="flex items-center gap-3">
+          <div className="rounded-2xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+            🔋 {tokenData?.availableTokens || 0} Tokens
+          </div>
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
             {user?.name}
           </div>

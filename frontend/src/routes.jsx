@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 import Layout from './components/layout/Layout.jsx';
-import Dashboard from './pages/Dashboard.jsx';
+import UserDashboard from './pages/UserDashboard.jsx';
+import AdminDashboard from './pages/AdminDashboard.jsx';
 import BenchDetails from './pages/BenchDetails.jsx';
 import Analytics from './pages/Analytics.jsx';
 import Alerts from './pages/Alerts.jsx';
@@ -9,6 +10,7 @@ import Tokens from './pages/Tokens.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import ProtectedRoute from './components/common/ProtectedRoute.jsx';
+import DashboardRouter from './components/dashboard/DashboardRouter.jsx';
 
 const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
@@ -21,7 +23,7 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <Dashboard /> },
+      { index: true, element: <DashboardRouter /> },
       { path: 'bench/:id', element: <BenchDetails /> },
       { path: 'analytics', element: <Analytics /> },
       { path: 'alerts', element: <Alerts /> },

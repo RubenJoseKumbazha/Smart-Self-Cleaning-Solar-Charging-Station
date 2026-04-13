@@ -1,8 +1,9 @@
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const mockUsers = [
-  { id: '1', email: 'admin@example.com', password: 'password123', name: 'Admin User' },
-  { id: '2', email: 'manager@example.com', password: 'password123', name: 'Manager User' },
+  { id: '1', email: 'admin@example.com', password: 'password123', name: 'Admin User', role: 'admin' },
+  { id: '2', email: 'manager@example.com', password: 'password123', name: 'Manager User', role: 'user' },
+  { id: '3', email: 'user@example.com', password: 'password123', name: 'Demo User', role: 'user' },
 ];
 
 export async function loginUser(email, password) {
@@ -18,6 +19,7 @@ export async function loginUser(email, password) {
     id: user.id,
     email: user.email,
     name: user.name,
+    role: user.role,
     token: `token_${user.id}_${Date.now()}`,
   };
 }
@@ -39,6 +41,7 @@ export async function registerUser(name, email, password) {
     email,
     password,
     name,
+    role: 'user',
   };
 
   mockUsers.push(newUser);
@@ -47,6 +50,7 @@ export async function registerUser(name, email, password) {
     id: newUser.id,
     email: newUser.email,
     name: newUser.name,
+    role: newUser.role,
     token: `token_${newUser.id}_${Date.now()}`,
   };
 }

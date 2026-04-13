@@ -45,7 +45,7 @@ export default function Login() {
             </svg>
           </div>
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Smart Solar Bench</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Admin Dashboard</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">User Dashboard</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -93,14 +93,28 @@ export default function Login() {
           </p>
         </div>
 
-        <div className="mt-8 space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950/60">
+        <div className="mt-8 space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950/60">
           <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Demo Credentials</p>
-          <p className="text-xs text-slate-600 dark:text-slate-300">
-            <span className="font-medium">Email:</span> admin@example.com
-          </p>
-          <p className="text-xs text-slate-600 dark:text-slate-300">
-            <span className="font-medium">Password:</span> password123
-          </p>
+          
+          <div className="space-y-1 rounded-lg bg-white p-2 dark:bg-slate-800">
+            <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400">👤 Admin Account</p>
+            <p className="text-xs text-slate-600 dark:text-slate-300">
+              <span className="font-medium">Email:</span> admin@example.com
+            </p>
+            <p className="text-xs text-slate-600 dark:text-slate-300">
+              <span className="font-medium">Password:</span> password123
+            </p>
+          </div>
+
+          <div className="space-y-1 rounded-lg bg-white p-2 dark:bg-slate-800">
+            <p className="text-xs font-medium text-blue-700 dark:text-blue-400">👥 User Account</p>
+            <p className="text-xs text-slate-600 dark:text-slate-300">
+              <span className="font-medium">Email:</span> manager@example.com
+            </p>
+            <p className="text-xs text-slate-600 dark:text-slate-300">
+              <span className="font-medium">Password:</span> password123
+            </p>
+          </div>
         </div>
       </div>
     </div>
