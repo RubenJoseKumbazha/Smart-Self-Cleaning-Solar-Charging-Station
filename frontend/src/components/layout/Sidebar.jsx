@@ -28,7 +28,7 @@ export default function Sidebar() {
             <div className="h-10 w-10 rounded-2xl bg-white/10"></div>
             <div>
               <p className="text-sm uppercase tracking-[0.18em] text-slate-300 dark:text-slate-500">Smart Bench</p>
-              <p className="text-lg font-semibold">User dashboard</p>
+              <p className="text-lg font-semibold">{isAdmin ? 'Admin dashboard' : 'User dashboard'}</p>
             </div>
           </div>
           <nav className="space-y-2">
