@@ -2,6 +2,8 @@ import { createBrowserRouter } from 'react-router-dom';
 import Layout from './components/layout/Layout.jsx';
 import UserDashboard from './pages/UserDashboard.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
+import AdminBenches from './pages/AdminBenches.jsx';
+import AdminUsers from './pages/AdminUsers.jsx';
 import BenchDetails from './pages/BenchDetails.jsx';
 import Analytics from './pages/Analytics.jsx';
 import Alerts from './pages/Alerts.jsx';
@@ -25,6 +27,8 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <DashboardRouter /> },
       { path: 'bench/:id', element: <BenchDetails /> },
+      { path: 'admin/benches', element: <AdminBenches /> },
+      { path: 'admin/users', element: <AdminUsers /> },
       { path: 'analytics', element: <Analytics /> },
       { path: 'alerts', element: <Alerts /> },
       { path: 'tokens', element: <Tokens /> },

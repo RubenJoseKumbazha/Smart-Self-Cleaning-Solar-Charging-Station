@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useTokens } from '../../context/TokenContext.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
 
 const links = [
   { label: 'Dashboard', to: '/' },
@@ -9,8 +10,15 @@ const links = [
   { label: 'Settings', to: '/settings' },
 ];
 
+const adminLinks = [
+  { label: 'Manage Benches', to: '/admin/benches' },
+  { label: 'Manage Users', to: '/admin/users' },
+];
+
 export default function Sidebar() {
   const { tokenData } = useTokens();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   return (
     <aside className="fixed inset-y-0 left-0 z-20 w-full border-b border-slate-200 bg-white shadow-soft sm:static sm:w-72 sm:border-b-0 sm:border-r sm:shadow-none dark:border-slate-800 dark:bg-slate-950">
@@ -46,6 +54,26 @@ export default function Sidebar() {
               </NavLink>
             ))}
           </nav>
+          {isAdmin && (
+            <>
+              <div className="mb-4 mt-8 text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Admin Panel</div>
+              <nav className="space-y-2">
+                {adminLinks.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) =>
+                      `block rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                        isActive ? 'bg-purple-600 text-white dark:bg-purple-500' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100'
+                      }`
+                    }
+                  >
+                    {item.label}
+                  </NavLink>
+                ))}
+              </nav>
+            </>
+          )}
         </div>
         <div className="mt-8 rounded-3xl bg-slate-50 p-5 text-sm text-slate-600 dark:bg-slate-900 dark:text-slate-300">
           <p className="font-semibold text-slate-900 dark:text-slate-100">Fleet status</p>
