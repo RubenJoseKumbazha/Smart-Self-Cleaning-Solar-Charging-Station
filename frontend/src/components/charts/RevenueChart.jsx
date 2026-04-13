@@ -1,24 +1,24 @@
 import {
+  Bar,
+  BarChart,
   CartesianGrid,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
 
-export default function SessionsChart({ data }) {
+export default function RevenueChart({ data }) {
   return (
     <div className="h-80">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 10, right: 10, left: -16, bottom: 0 }}>
+        <BarChart data={data} margin={{ top: 10, right: 10, left: -16, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.2)" />
           <XAxis dataKey="day" tick={{ fill: '#94a3b8', fontSize: 12 }} />
           <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} />
           <Tooltip wrapperStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 10px 30px rgba(15,23,42,0.15)' }} />
-          <Line type="monotone" dataKey="sessions" stroke="#2563eb" strokeWidth={3} dot={{ r: 4 }} />
-        </LineChart>
+          <Bar dataKey="revenue" fill="#16a34a" radius={[8, 8, 0, 0]} />
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );
