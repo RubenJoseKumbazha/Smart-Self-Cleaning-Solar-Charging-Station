@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Relay Control</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="text-align:center; font-family:sans-serif;">
+
+  <h1>Relay Control</h1>
+
+  <button onclick="setRelay(1)" style="padding:20px; font-size:20px;">ON</button>
+  <button onclick="setRelay(0)" style="padding:20px; font-size:20px;">OFF</button>
+
+  <h2 id="status">Loading...</h2>
+
+  <script>
+    function setRelay(state) {
+      fetch('/setRelay.php?state=' + state)
+        .then(res => res.text())
+        .then(() => updateStatus());
+    }
+
+    function updateStatus() {
+      fetch('/getRelay.php')
+        .then(res => res.text())
+        .then(data => {
+          document.getElementById("status").innerText =
+            data == "1" ? "ON" : "OFF";
+        });
+    }
+
+    setInterval(updateStatus, 2000);
+    updateStatus();
+  </script>
+
+</body>
+</html>

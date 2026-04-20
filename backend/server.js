@@ -213,6 +213,360 @@ app.delete('/api/users/:id', (req, res) => {
   }
 });
 
+// ============ RELAY CONTROL ROUTES ============
+
+// Relay server file path
+const relayStatePath = path.join(__dirname, '..', 'Connector', 'relay_server', 'state.txt');
+
+// Get relay state
+app.get('/api/relay/state', (req, res) => {
+  try {
+    const state = fs.readFileSync(relayStatePath, 'utf-8').trim();
+    res.json({
+      state: state === '1' ? 'ON' : 'OFF',
+      value: parseInt(state) || 0,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error reading relay state:', error);
+    res.status(500).json({ error: 'Failed to read relay state' });
+  }
+});
+
+// Set relay state
+app.post('/api/relay/state', (req, res) => {
+  try {
+    const { state } = req.body;
+    const value = state === 'ON' || state === '1' || state === 1 ? '1' : '0';
+    
+    fs.writeFileSync(relayStatePath, value, 'utf-8');
+    
+    res.json({
+      state: value === '1' ? 'ON' : 'OFF',
+      value: parseInt(value),
+      timestamp: new Date().toISOString(),
+      message: 'Relay state updated'
+    });
+  } catch (error) {
+    console.error('Error setting relay state:', error);
+    res.status(500).json({ error: 'Failed to set relay state' });
+  }
+});
+
+// Toggle relay
+app.post('/api/relay/toggle', (req, res) => {
+  try {
+    const current = fs.readFileSync(relayStatePath, 'utf-8').trim();
+    const newValue = current === '1' ? '0' : '1';
+    
+    fs.writeFileSync(relayStatePath, newValue, 'utf-8');
+    
+    res.json({
+      state: newValue === '1' ? 'ON' : 'OFF',
+      value: parseInt(newValue),
+      timestamp: new Date().toISOString(),
+      message: 'Relay toggled'
+    });
+  } catch (error) {
+    console.error('Error toggling relay:', error);
+    res.status(500).json({ error: 'Failed to toggle relay' });
+  }
+});
+
+// ============ SESSIONS ROUTES (Token-Based Charging) ============
+
+const sessionsPath = path.join(__dirname, 'data', 'sessions.json');
+const TOKENS_PER_HOUR = 3;
+const DEFAULT_DURATION_HOURS = 1;
+
+// Initialize sessions file if not exists
+if (!fs.existsSync(sessionsPath)) {
+  fs.writeFileSync(sessionsPath, JSON.stringify([], null, 2), 'utf-8');
+}
+
+// Get bench by bench_id (instead of database id)
+const getBenchByBenchId = (benchId) => {
+  const benches = readFile(benchesPath);
+  return benches.find(b => b.bench_id === benchId);
+};
+
+// Update bench by bench_id
+const updateBenchByBenchId = (benchId, updates) => {
+  const benches = readFile(benchesPath);
+  const benchIndex = benches.findIndex(b => b.bench_id === benchId);
+  
+  if (benchIndex === -1) return false;
+  
+  benches[benchIndex] = {
+    ...benches[benchIndex],
+    ...updates,
+    updated_at: new Date().toISOString(),
+  };
+  
+  return writeFile(benchesPath, benches);
+};
+
+// Register/Update bench (from ESP32)
+app.post('/api/benches-telemetry', (req, res) => {
+  const { bench_id, battery_percent, solar_watts, temperature, status } = req.body;
+  
+  if (!bench_id) {
+    return res.status(400).json({ error: 'bench_id is required' });
+  }
+  
+  let benches = readFile(benchesPath);
+  let benchIndex = benches.findIndex(b => b.bench_id === bench_id);
+  
+  if (benchIndex === -1) {
+    // Create new bench if doesn't exist
+    const newBench = {
+      id: Date.now().toString(),
+      bench_id,
+      location: req.body.location || 'Unknown',
+      latitude: req.body.latitude || 0,
+      longitude: req.body.longitude || 0,
+      battery_percent: battery_percent || 50,
+      solar_watts: solar_watts || 0,
+      temperature: temperature || 25,
+      status: status || 'online',
+      active_sessions: 0,
+      daily_sessions: 0,
+      panel_capacity: req.body.panel_capacity || 200,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    benches.push(newBench);
+    writeFile(benchesPath, benches);
+    return res.status(201).json({ ...newBench, message: 'Bench registered' });
+  }
+  
+  // Update existing bench
+  benches[benchIndex] = {
+    ...benches[benchIndex],
+    battery_percent: battery_percent !== undefined ? battery_percent : benches[benchIndex].battery_percent,
+    solar_watts: solar_watts !== undefined ? solar_watts : benches[benchIndex].solar_watts,
+    temperature: temperature !== undefined ? temperature : benches[benchIndex].temperature,
+    status: status || benches[benchIndex].status,
+    updated_at: new Date().toISOString(),
+  };
+  
+  if (writeFile(benchesPath, benches)) {
+    res.json({ ...benches[benchIndex], message: 'Bench telemetry updated' });
+  } else {
+    res.status(500).json({ error: 'Failed to update bench' });
+  }
+});
+
+// Get bench by bench_id
+app.get('/api/benches/bench/:benchId', (req, res) => {
+  const bench = getBenchByBenchId(req.params.benchId);
+  
+  if (!bench) {
+    return res.status(404).json({ error: 'Bench not found' });
+  }
+  
+  const sessions = readFile(sessionsPath).filter(s => s.bench_id === req.params.benchId && s.status === 'active');
+  
+  res.json({
+    ...bench,
+    active_sessions: sessions.length,
+    can_charge: bench.status === 'online' && sessions.length < 5, // Max 5 concurrent sessions
+    available: bench.status === 'online',
+  });
+});
+
+// Start charging session (with token payment)
+app.post('/api/sessions/start', (req, res) => {
+  const { bench_id, user_id, duration_hours = DEFAULT_DURATION_HOURS, tokens_required = TOKENS_PER_HOUR } = req.body;
+  
+  if (!bench_id || !user_id) {
+    return res.status(400).json({ error: 'bench_id and user_id are required' });
+  }
+  
+  // Check if bench exists and is online
+  const bench = getBenchByBenchId(bench_id);
+  if (!bench) {
+    return res.status(400).json({ error: 'Bench not found', bench_id });
+  }
+  
+  if (bench.status !== 'online') {
+    return res.status(400).json({ 
+      error: 'Bench not available', 
+      bench_id, 
+      status: bench.status 
+    });
+  }
+  
+  // Check if bench already has max sessions
+  const sessions = readFile(sessionsPath).filter(s => s.bench_id === bench_id && s.status === 'active');
+  if (sessions.length >= 5) {
+    return res.status(400).json({ 
+      error: 'Maximum concurrent sessions reached',
+      bench_id,
+      current_sessions: sessions.length
+    });
+  }
+  
+  // Check if user has enough tokens
+  let users = readFile(usersPath);
+  const user = users.find(u => u.id === user_id);
+  
+  if (!user) {
+    return res.status(404).json({ error: 'User not found', user_id });
+  }
+  
+  const userTokens = user.tokens || 0;
+  if (userTokens < tokens_required) {
+    return res.status(400).json({ 
+      error: 'Insufficient tokens',
+      user_id,
+      available_tokens: userTokens,
+      required_tokens: tokens_required
+    });
+  }
+  
+  // Deduct tokens from user
+  const userIndex = users.findIndex(u => u.id === user_id);
+  users[userIndex].tokens = (users[userIndex].tokens || 0) - tokens_required;
+  
+  // Store token transaction
+  if (!users[userIndex].token_transactions) {
+    users[userIndex].token_transactions = [];
+  }
+  users[userIndex].token_transactions.push({
+    type: 'deduct',
+    amount: tokens_required,
+    reason: `Charging session at ${bench_id}`,
+    timestamp: new Date().toISOString(),
+  });
+  
+  writeFile(usersPath, users);
+  
+  // Create session
+  let allSessions = readFile(sessionsPath);
+  const sessionId = 'sess_' + Date.now();
+  const startTime = new Date();
+  const expiresAt = new Date(startTime.getTime() + duration_hours * 60 * 60 * 1000);
+  
+  const newSession = {
+    session_id: sessionId,
+    bench_id,
+    user_id,
+    started_at: startTime.toISOString(),
+    expires_at: expiresAt.toISOString(),
+    duration_hours,
+    tokens_deducted: tokens_required,
+    status: 'active',
+    charging: true,
+  };
+  
+  allSessions.push(newSession);
+  writeFile(sessionsPath, allSessions);
+  
+  // Update bench active_sessions counter
+  updateBenchByBenchId(bench_id, { 
+    active_sessions: sessions.length + 1,
+    daily_sessions: (bench.daily_sessions || 0) + 1,
+  });
+  
+  res.status(200).json({
+    session_id: sessionId,
+    bench_id,
+    user_id,
+    status: 'active',
+    charging: true,
+    tokens_deducted: tokens_required,
+    expires_at: expiresAt.toISOString(),
+    message: 'Charging session started - tokens deducted'
+  });
+});
+
+// End charging session
+app.post('/api/sessions/end', (req, res) => {
+  const { session_id, bench_id, user_id } = req.body;
+  
+  if (!session_id || !bench_id) {
+    return res.status(400).json({ error: 'session_id and bench_id are required' });
+  }
+  
+  let sessions = readFile(sessionsPath);
+  const sessionIndex = sessions.findIndex(s => s.session_id === session_id);
+  
+  if (sessionIndex === -1) {
+    return res.status(404).json({ error: 'Session not found', session_id });
+  }
+  
+  const session = sessions[sessionIndex];
+  const duration = Math.round((new Date() - new Date(session.started_at)) / 60000); // minutes
+  
+  sessions[sessionIndex] = {
+    ...session,
+    status: 'completed',
+    charging: false,
+    ended_at: new Date().toISOString(),
+    duration_minutes: duration,
+  };
+  
+  writeFile(sessionsPath, sessions);
+  
+  // Update bench
+  const bench = getBenchByBenchId(bench_id);
+  const activeSessions = sessions.filter(s => s.bench_id === bench_id && s.status === 'active').length;
+  updateBenchByBenchId(bench_id, { 
+    active_sessions: Math.max(0, activeSessions),
+  });
+  
+  res.json({
+    session_id,
+    bench_id,
+    status: 'completed',
+    charging: false,
+    duration_minutes: duration,
+    tokens_used: session.tokens_deducted,
+    message: 'Session ended'
+  });
+});
+
+// Get bench sessions
+app.get('/api/benches/bench/:benchId/sessions', (req, res) => {
+  const sessions = readFile(sessionsPath);
+  const benchSessions = sessions.filter(s => s.bench_id === req.params.benchId);
+  
+  res.json(benchSessions);
+});
+
+// Get active sessions for a bench
+app.get('/api/benches/bench/:benchId/sessions/active', (req, res) => {
+  const sessions = readFile(sessionsPath);
+  const activeSessions = sessions.filter(s => s.bench_id === req.params.benchId && s.status === 'active');
+  
+  res.json(activeSessions);
+});
+
+// Check if bench is available for charging
+app.get('/api/benches/bench/:benchId/availability', (req, res) => {
+  const bench = getBenchByBenchId(req.params.benchId);
+  
+  if (!bench) {
+    return res.status(404).json({ error: 'Bench not found' });
+  }
+  
+  const sessions = readFile(sessionsPath).filter(s => s.bench_id === req.params.benchId && s.status === 'active');
+  const maxConcurrentSessions = 5;
+  
+  res.json({
+    bench_id: req.params.benchId,
+    available: bench.status === 'online',
+    can_charge: bench.status === 'online' && sessions.length < maxConcurrentSessions,
+    status: bench.status,
+    battery_percent: bench.battery_percent,
+    active_sessions: sessions.length,
+    max_concurrent_sessions: maxConcurrentSessions,
+    reason: bench.status === 'offline' ? 'Bench is offline' : 
+            sessions.length >= maxConcurrentSessions ? 'Maximum sessions reached' : 'Available',
+  });
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Smart Solar Bench API is running' });
@@ -222,4 +576,5 @@ app.get('/api/health', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Smart Solar Bench Backend running on http://localhost:${PORT}`);
   console.log(`API available at http://localhost:${PORT}/api`);
+  console.log(`Relay API available at http://localhost:${PORT}/api/relay`);
 });

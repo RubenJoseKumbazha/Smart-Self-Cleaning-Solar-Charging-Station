@@ -99,3 +99,63 @@ export async function postControlAction(action, bench_id) {
     message: `Action ${action.replace('-', ' ')} executed for ${bench_id}`,
   };
 }
+
+// Relay Control API
+export async function getRelayState() {
+  if (!useMock) {
+    try {
+      const response = await http.get('/relay/state');
+      return response.data;
+    } catch (error) {
+      console.error('Error getting relay state:', error);
+      throw error;
+    }
+  }
+  
+  await delay(300);
+  return {
+    state: 'OFF',
+    value: 0,
+    timestamp: new Date().toISOString()
+  };
+}
+
+export async function setRelayState(state) {
+  if (!useMock) {
+    try {
+      const response = await http.post('/relay/state', { state });
+      return response.data;
+    } catch (error) {
+      console.error('Error setting relay state:', error);
+      throw error;
+    }
+  }
+  
+  await delay(500);
+  return {
+    state: state === 'ON' || state === 1 ? 'ON' : 'OFF',
+    value: state === 'ON' || state === 1 ? 1 : 0,
+    timestamp: new Date().toISOString(),
+    message: 'Relay state updated'
+  };
+}
+
+export async function toggleRelay() {
+  if (!useMock) {
+    try {
+      const response = await http.post('/relay/toggle');
+      return response.data;
+    } catch (error) {
+      console.error('Error toggling relay:', error);
+      throw error;
+    }
+  }
+  
+  await delay(500);
+  return {
+    state: Math.random() > 0.5 ? 'ON' : 'OFF',
+    value: Math.random() > 0.5 ? 1 : 0,
+    timestamp: new Date().toISOString(),
+    message: 'Relay toggled'
+  };
+}
